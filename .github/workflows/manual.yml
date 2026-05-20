@@ -1,40 +1,43 @@
-name: Scraping Manual y Guardado
+name: Scraping Manual La Vanguardia
 
 on:
-  workflow_dispatch: # Activa el botón manual
+  workflow_dispatch: # Botón manual en la interfaz de GitHub
 
 jobs:
-  scrape_and_commit:
+  run_scraper:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clonar el código del repositorio
+      - name: Descargar el repositorio
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Configurar entorno de Python
+      - name: Configurar Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Instalar dependencias
+      - name: Instalar librerías de Python
         run: |
+          # Necesitamos requests para descargar la web, beautifulsoup4 para leerla y pandas para el CSV
           pip install requests beautifulsoup4 pandas
 
-      - name: Ejecutar el script de Scraping
+      - name: Ejecutar Scraping de La Vanguardia
         run: |
-          # ¡OJO! Viendo tu menú de la izquierda, tu script se llama 'priviet.py'
-          python priviet.py 
+          python priviet.py
           
-      - name: Configurar Git y guardar cambios
+      - name: Guardar CSV generado en el repositorio
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add .
+          
+          # Añade el nuevo archivo creado 'titulares_lavanguardia.csv'
+          git add titulares_lavanguardia.csv
+          
           if git diff --quiet && git diff --staged --quiet; then
-            echo "No hay nuevos cambios que guardar."
+            echo "No hay cambios nuevos en los titulares."
           else
-            git commit -m "Actualización de datos por scraping manual [skip ci]"
+            git commit -m "Prueba Scraping: Titulares actualizados [skip ci]"
             git push origin main
           fi
