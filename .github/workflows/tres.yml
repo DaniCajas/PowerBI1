@@ -1,36 +1,40 @@
-name: Ejecución Manual
+name: Scraping Manual y Guardado
 
-# Aquí está la clave: al usar workflow_dispatch, solo se ejecutará cuando tú lo decidas
 on:
-  workflow_dispatch:
-    inputs:
-      entorno:
-        description: 'Entorno donde desplegar'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
-      motivo:
-        description: 'Breve motivo de la ejecución'
-        required: false
-        type: string
+  workflow_dispatch: # Activa el botón manual
 
 jobs:
-  mi_tarea:
+  scrape_and_commit:
     runs-on: ubuntu-latest
+
     steps:
       - name: Clonar el código del repositorio
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Saludo inicial
-        run: |
-          echo "¡Hola! Has ejecutado este flujo manualmente."
-          echo "Entorno seleccionado: ${{ github.event.inputs.entorno }}"
-          echo "Motivo: ${{ github.event.inputs.motivo }}"
+      - name: Configurar entorno de Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-      - name: Ejecutar tus comandos
+      - name: Instalar dependencias
         run: |
-          echo "Aquí puedes poner los comandos que realmente quieres ejecutar..."
-          # Ejemplo: npm run build o python script.py
+          # ¡Aquí estaba el truco! Añadimos pandas para que el script no falle
+          pip install requests beautifulsoup4 pandas
+
+      - name: Ejecutar el script de Scraping
+        run: |
+          python priviet.py 
+          
+      - name: Configurar Git y guardar cambios
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No hay nuevos cambios que guardar."
+          else
+            git commit -m "Actualización de datos por scraping manual [skip ci]"
+            git push origin main
+          fi
