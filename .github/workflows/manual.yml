@@ -1,0 +1,40 @@
+name: Scraping Manual y Guardado
+
+on:
+  workflow_dispatch: # Activa el botón manual
+
+jobs:
+  scrape_and_commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar el código del repositorio
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurar entorno de Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Instalar dependencias
+        run: |
+          pip install requests beautifulsoup4 pandas
+
+      - name: Ejecutar el script de Scraping
+        run: |
+          # ¡OJO! Viendo tu menú de la izquierda, tu script se llama 'priviet.py'
+          python priviet.py 
+          
+      - name: Configurar Git y guardar cambios
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No hay nuevos cambios que guardar."
+          else
+            git commit -m "Actualización de datos por scraping manual [skip ci]"
+            git push origin main
+          fi
